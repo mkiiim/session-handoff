@@ -37,6 +37,11 @@ while [[ $# -gt 0 ]]; do
         usage >&2
         exit 2
       fi
+      if [[ -n "$session_id" && "$session_id" != "$2" ]]; then
+        printf 'Conflicting session IDs: %s and %s\n' "$session_id" "$2" >&2
+        usage >&2
+        exit 2
+      fi
       session_id="$2"
       shift 2 ;;
     -t|--target-path)
