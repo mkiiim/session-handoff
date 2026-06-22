@@ -88,18 +88,18 @@ Run from anywhere inside the project:
 
 ```bash
 # Bundle a specific session
-codex/bundle.sh <session-id>
+codex/bundle.sh -s <session-id>
 
 # Bundle for a different project path on the target machine
-codex/bundle.sh -t /Users/mark/Projects/myproject <session-id>
+codex/bundle.sh -s <session-id> -t /Users/mark/Projects/myproject
 ```
 
 Output:
 
 ```
-Bundle directory: <repo>/target/session-bundles/codex-session-<id>-<timestamp>/
-Archive: <repo>/target/session-bundles/codex-session-<id>-<timestamp>.tar.gz
-Prompt: <repo>/target/session-bundles/codex-session-<id>-<timestamp>/continuation-prompt.md
+Bundle directory: ~/codex-session-bundles/codex-session-<id>-<timestamp>/
+Archive: ~/codex-session-bundles/codex-session-<id>-<timestamp>.tar.gz
+Prompt: ~/codex-session-bundles/codex-session-<id>-<timestamp>/continuation-prompt.md
 ```
 
 The Codex bundle preserves paths relative to `$CODEX_HOME`, so session files keep their native shape:

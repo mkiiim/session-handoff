@@ -3,34 +3,42 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: bundle-codex-session.sh [OPTIONS] SESSION_ID [OUTPUT_DIR]
+Usage: bundle-codex-session.sh [OPTIONS]
 
 Bundle a Codex CLI session for transfer to another machine. Produces a tar.gz
 archive, a target-machine install script, and a ready-to-paste continuation
 prompt.
 
 Options:
+  -s, --session-id <id>     Session ID to bundle
   -t, --target-path <path>  Project root on the target machine
                             (default: same path as source)
-  -o, --output-dir <dir>    Output bundle directory
-                            (default: ./target/session-bundles/<bundle-name>)
+  -o, --output-dir <dir>    Output directory (default: ~/codex-session-bundles)
   -h, --help                Show this help
 
 Environment:
   CODEX_HOME    Defaults to ~/.codex
 
 Examples:
-  codex/bundle.sh 019dd9be-0baf-7710-92e1-aca6e3d68ea5
-  codex/bundle.sh -t /Users/mark/Projects/myproject 019dd9be-0baf-7710-92e1-aca6e3d68ea5
+  codex/bundle.sh -s 019dd9be-0baf-7710-92e1-aca6e3d68ea5
+  codex/bundle.sh -s 019dd9be-0baf-7710-92e1-aca6e3d68ea5 -t /Users/mark/Projects/myproject
 USAGE
 }
 
 session_id=""
 target_path=""
-output_dir=""
+output_dir="${HOME}/codex-session-bundles"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -s|--session-id)
+      if [[ $# -lt 2 ]]; then
+        printf 'Missing value for %s\n' "$1" >&2
+        usage >&2
+        exit 2
+      fi
+      session_id="$2"
+      shift 2 ;;
     -t|--target-path)
       if [[ $# -lt 2 ]]; then
         printf 'Missing value for %s\n' "$1" >&2
@@ -54,15 +62,9 @@ while [[ $# -gt 0 ]]; do
       usage >&2
       exit 2 ;;
     *)
-      if [[ -z "$session_id" ]]; then
-        session_id="$1"
-      elif [[ -z "$output_dir" ]]; then
-        output_dir="$1"
-      else
-        printf 'Unexpected argument: %s\n' "$1" >&2
-        usage >&2
-        exit 2
-      fi
+      printf 'Unexpected argument: %s\n' "$1" >&2
+      usage >&2
+      exit 2
       shift ;;
   esac
 done
@@ -85,8 +87,8 @@ if [[ -z "$target_path" ]]; then
 fi
 
 timestamp="$(date -u +"%Y%m%dT%H%M%SZ")"
-default_output="$repo_root/target/session-bundles/codex-session-$session_id-$timestamp"
-bundle_dir="${output_dir:-$default_output}"
+bundle_name="codex-session-$session_id-$timestamp"
+bundle_dir="${output_dir}/${bundle_name}"
 created_at_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
 mkdir -p "$bundle_dir/codex" "$bundle_dir/repo"
