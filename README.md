@@ -67,7 +67,7 @@ Flags can be combined:
 /tmp/claude-session-<id>-<timestamp>/install.sh --replace --print-prompt
 ```
 
-Then open Claude Code in the target project directory, start a new session, and paste `continuation-prompt.md`.
+Then open Claude Code in the target project directory and resume using the notes below.
 
 ### Global config (optional)
 
@@ -141,7 +141,50 @@ Flags can be combined:
 /tmp/codex-session-<id>-<timestamp>/install.sh --replace --print-prompt
 ```
 
-Then open Codex in the target project directory, start a new session, and paste `continuation-prompt.md`.
+Then open Codex in the target project directory and resume using the notes below.
+
+---
+
+## Resume after restore
+
+The bundle includes `continuation-prompt.md`, but a successful native resume is the preferred path. Treat the prompt as a fallback or audit summary when native resume is unavailable, incomplete, or confusing.
+
+### Claude Code
+
+After running `install.sh`, open Claude Code in the target project directory and use `/resume` to pick up the migrated session. If the session appears and loads, Claude has the full conversation transcript available as context — which is more complete than `continuation-prompt.md`, since the prompt truncates and summarizes while the `.jsonl` is the raw record.
+
+**What Claude actually has after a successful resume:**
+
+- The full conversation history from the `.jsonl`, including tool calls and their output
+- Everything after the last compaction boundary in full; earlier exchanges as a compaction summary only — the raw turns before that boundary are no longer in context
+- Project memory files, if installed, available to any session in the project directory
+- Project-level instructions from `CLAUDE.md`, loaded automatically
+
+**What the transcript does not capture — verify before acting:**
+
+- **File state on disk.** Claude may recall editing a file in the prior session, but the target machine may have a different version (different commit, local edits, or the change was never committed). Read files before assuming their content.
+- **Git state.** Branch, HEAD, and uncommitted changes are not embedded in the transcript. Run `git status` and `git log` before doing anything that touches the tree.
+- **Environment.** Secrets, env vars, credentials, installed tools, and running services that the prior session depended on may not exist on the target machine. Nothing in the transcript confirms they do.
+- **Repo diff.** `repo/git-state.txt` in the bundle captures the state at bundle time. If the target checkout is not at the same commit, treat that as a gap to resolve first.
+
+Use `continuation-prompt.md` when `/resume` cannot find the session, the resumed context looks truncated or confusing, or you want an explicit structured handoff summary before continuing work.
+
+### Codex CLI
+
+After running `install.sh`, start Codex in the target project and try `/resume`. If the migrated session appears and resumes, Codex has generally loaded the session rollout and enough session metadata to continue from the transferred transcript.
+
+That does not prove the target machine is safe to modify automatically. Before making risky edits, confirm the target checkout matches the bundled repo state: branch, commit, uncommitted changes, ignored local files, env vars, secrets, database state, and any running services that the prior session depended on.
+
+The most important restored Codex files are:
+
+```
+$CODEX_HOME/sessions/YYYY/MM/DD/rollout-<timestamp>-<session-id>.jsonl
+$CODEX_HOME/shell_snapshots/<session-id>.<timestamp>.sh
+```
+
+`history.jsonl` and `session_index.jsonl` lines are bundled for review but are not installed automatically. If `/resume` works, leave those files alone unless there is a specific discoverability issue to debug.
+
+Use `continuation-prompt.md` when `/resume` cannot find the session, the resumed context looks incomplete, or you want an explicit handoff summary before continuing.
 
 ---
 
