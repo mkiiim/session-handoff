@@ -59,15 +59,12 @@ tar -xzf ~/Downloads/claude-session-<id>-<timestamp>.tar.gz -C /tmp/
 | *(none)* | skip files that already exist at the destination; report which were skipped |
 | `--replace` | overwrite existing files without prompting |
 | `--interactive` | prompt before overwriting each existing file |
-| `--print-prompt` | print the continuation prompt after installing |
 
-Flags can be combined:
+Then open Claude Code in the target project directory, start a new session, and tell it to read the continuation prompt:
 
-```bash
-/tmp/claude-session-<id>-<timestamp>/install.sh --replace --print-prompt
 ```
-
-Then open Claude Code in the target project directory and resume using the notes below.
+Read /tmp/claude-session-<id>-<timestamp>/continuation-prompt.md and continue from there.
+```
 
 ### Global config (optional)
 
@@ -126,6 +123,10 @@ tar -xzf ~/Downloads/codex-session-<id>-<timestamp>.tar.gz -C /tmp/
 
 `install.sh` restores session rollouts and shell snapshots into `$CODEX_HOME` one file at a time. It does not modify `history.jsonl` or `session_index.jsonl`; matching lines are bundled for manual review.
 
+Open Codex in the target project directory, start a new session, and tell it to read the continuation prompt:
+
+> Read `/tmp/codex-session-<id>-<timestamp>/continuation-prompt.md` and continue from there.
+
 #### Duplicate handling flags
 
 | Flag | Behavior |
@@ -133,15 +134,10 @@ tar -xzf ~/Downloads/codex-session-<id>-<timestamp>.tar.gz -C /tmp/
 | *(none)* | skip files that already exist at the destination; report which were skipped |
 | `--replace` | overwrite existing files without prompting |
 | `--interactive` | prompt before overwriting each existing file |
-| `--print-prompt` | print the continuation prompt after installing |
 
-Flags can be combined:
+Open Codex in the target project directory, start a new session, and tell it to read the continuation prompt:
 
-```bash
-/tmp/codex-session-<id>-<timestamp>/install.sh --replace --print-prompt
-```
-
-Then open Codex in the target project directory and resume using the notes below.
+> Read `/tmp/codex-session-<id>-<timestamp>/continuation-prompt.md` and continue from there.
 
 ---
 
@@ -211,7 +207,7 @@ claude-session-<id>-<timestamp>/
 ```
 codex-session-<id>-<timestamp>/
   install.sh               # run this on the target machine to restore the session
-  continuation-prompt.md   # paste this into a new Codex session to restore context
+  continuation-prompt.md   # tell Codex to read this file to restore context
   MANIFEST.md              # full install notes and path details
   codex/
     sessions/              # Codex-relative session rollout paths

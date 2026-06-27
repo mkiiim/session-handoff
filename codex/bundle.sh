@@ -260,13 +260,27 @@ fi
     printf 'None found.\n'
   fi
   printf '\n## Repo State at Bundle Time\n\n'
-  printf 'See `repo/git-status.txt`, `repo/git-refs.txt`, `repo/git-worktrees.txt`, and `repo/repo.diff` in this bundle.\n\n'
+  printf '### git status\n\n```\n'
+  cat "$bundle_dir/repo/git-status.txt"
+  printf '```\n\n'
+  printf '### git refs\n\n```\n'
+  cat "$bundle_dir/repo/git-refs.txt"
+  printf '```\n\n'
+  printf '### git worktrees\n\n```\n'
+  cat "$bundle_dir/repo/git-worktrees.txt"
+  printf '```\n\n'
+  if [[ -s "$bundle_dir/repo/repo.diff" ]]; then
+    printf '### uncommitted diff\n\n```diff\n'
+    cat "$bundle_dir/repo/repo.diff"
+    printf '```\n\n'
+  fi
   printf '## State Files\n\n'
   printf '`codex/history-lines.jsonl` and `codex/session-index-lines.jsonl` were bundled for review but are not installed automatically.\n\n'
-  printf '## How to Use\n\n'
+  printf '## How to Resume\n\n'
   printf 'Open Codex in the target project directory (`%s`).\n' "$target_path"
-  printf 'Start a new session and paste this file, then say:\n\n'
-  printf '> This is a continuation of a prior Codex session. The restored files and repo metadata above capture the session state at bundle time. Treat the repo state as current context, and continue from there.\n'
+  printf 'Start a new session and tell Codex to read this file:\n\n'
+  printf '> Read `<path-to-this-file>/continuation-prompt.md` and continue from there.\n\n'
+  printf 'Everything above this section is the context Codex needs — session info, restored files, and repo state.\n'
 } >"$bundle_dir/continuation-prompt.md"
 
 cat > "$bundle_dir/install.sh" <<'INSTALL_SCRIPT'
@@ -274,24 +288,21 @@ cat > "$bundle_dir/install.sh" <<'INSTALL_SCRIPT'
 set -euo pipefail
 
 # Restore a Codex CLI session bundle on the target machine.
-# Usage: ./install.sh [--replace] [--interactive] [--print-prompt]
+# Usage: ./install.sh [--replace] [--interactive]
 #
 # Default: skip files that already exist at the destination and report them.
 # --replace      overwrite existing files without prompting
 # --interactive  prompt before overwriting each existing file
-# --print-prompt print the continuation prompt after installing
 
 BUNDLE_DIR="$(cd "$(dirname "$0")" && pwd)"
 CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
 
 mode="skip"
-print_prompt=false
 
 for arg in "$@"; do
   case "$arg" in
     --replace)      mode="replace" ;;
     --interactive)  mode="interactive" ;;
-    --print-prompt) print_prompt=true ;;
     *) printf 'unknown option: %s\n' "$arg" >&2; exit 2 ;;
   esac
 done
@@ -354,13 +365,8 @@ printf '  %s\n' "$BUNDLE_DIR/codex/history-lines.jsonl"
 printf '  %s\n' "$BUNDLE_DIR/codex/session-index-lines.jsonl"
 
 printf '\nDone.\n'
-printf 'Start Codex in the target project and paste the continuation prompt:\n\n'
-printf '  cat "%s/continuation-prompt.md"\n\n' "$BUNDLE_DIR"
-
-if $print_prompt; then
-  printf '\n---\n\n'
-  cat "$BUNDLE_DIR/continuation-prompt.md"
-fi
+printf 'Open Codex in the target project and tell it to read the continuation prompt:\n\n'
+printf '  Read "%s/continuation-prompt.md" and continue from there.\n\n' "$BUNDLE_DIR"
 INSTALL_SCRIPT
 chmod +x "$bundle_dir/install.sh"
 
