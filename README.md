@@ -135,10 +135,6 @@ Open Codex in the target project directory, start a new session, and tell it to 
 | `--replace` | overwrite existing files without prompting |
 | `--interactive` | prompt before overwriting each existing file |
 
-Open Codex in the target project directory, start a new session, and tell it to read the continuation prompt:
-
-> Read `/tmp/codex-session-<id>-<timestamp>/continuation-prompt.md` and continue from there.
-
 ---
 
 ## Resume after restore
