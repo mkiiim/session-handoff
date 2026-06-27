@@ -191,7 +191,7 @@ Use `continuation-prompt.md` when `/resume` cannot find the session, the resumed
 ```
 claude-session-<id>-<timestamp>/
   install.sh               # run this on the target machine to restore the session
-  continuation-prompt.md   # paste this into a new Claude Code session to restore context
+  continuation-prompt.md   # tell Claude to read this file to restore context
   MANIFEST.md              # full install notes and path details
   claude/
     <session-id>.jsonl     # full session transcript

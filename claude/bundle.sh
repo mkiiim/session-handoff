@@ -280,15 +280,14 @@ out = f"""# Claude Code Session Continuation
 
 ---
 
-## How to Use
+## How to Resume
 
 Open Claude Code in the target project directory (`{target_path}`).
-Start a new session and paste the contents of this file, then say:
+Start a new session and tell it to read this file:
 
-> This is a continuation of a prior Claude Code session. The context above
-> captures the session state at the time of bundling. Treat the memory index
-> as current, the recent context as the active workstream, and the last user
-> message as the prompt we were last responding to. Continue from there.
+> Read `<path-to-this-file>/continuation-prompt.md` and continue from there.
+
+Everything above is the context Claude needs — memory index, repo state, recent exchanges, and last prompt.
 """
 
 if out_path:
@@ -327,7 +326,7 @@ print(next((r.get('slug','') for r in reversed(records) if r.get('slug','')), ''
   printf -- '- `claude/settings.json` — global Claude settings (if present)\n'
   printf -- '- `claude/CLAUDE.md` — global Claude instructions (if present)\n'
   printf -- '- `repo/git-state.txt` — repo state at bundle time\n'
-  printf -- '- `continuation-prompt.md` — ready-to-paste context for new session\n'
+  printf -- '- `continuation-prompt.md` — tell Claude to read this file to restore context\n'
   printf -- '- `install.sh` — automated install script for the target machine\n\n'
 
   printf '## Install on Target Machine\n\n'
@@ -342,12 +341,14 @@ print(next((r.get('slug','') for r in reversed(records) if r.get('slug','')), ''
   printf '|------|----------|\n'
   printf '| *(none)* | skip files that already exist at the destination; report them |\n'
   printf '| `--replace` | overwrite existing files without prompting |\n'
-  printf '| `--interactive` | prompt before overwriting each existing file |\n'
-  printf '| `--print-prompt` | print the continuation prompt after installing |\n\n'
+  printf '| `--interactive` | prompt before overwriting each existing file |\n\n'
   printf 'The install script copies memory files and the session transcript into\n'
   printf '`~/.claude/projects/%s/`\n\n' "$target_encoded"
   printf 'Then open Claude Code in `%s`, start a new session,\n' "$target_path"
-  printf 'and paste `continuation-prompt.md`.\n\n'
+  printf 'and tell it to read the continuation prompt:\n\n'
+  printf '```\n'
+  printf 'Read /tmp/%s/continuation-prompt.md and continue from there.\n' "$bundle_name"
+  printf '```\n\n'
   printf '### Global config\n\n'
   printf 'Settings and CLAUDE.md are included in the bundle but **not** installed\n'
   printf 'automatically — copy them manually only if the target machine lacks its own:\n\n'
@@ -364,12 +365,11 @@ cat > "$bundle_dir/install.sh" <<INSTALL_SCRIPT
 set -euo pipefail
 
 # Restore a Claude Code session bundle on the target machine.
-# Usage: ./install.sh [--replace] [--interactive] [--print-prompt]
+# Usage: ./install.sh [--replace] [--interactive]
 #
 # Default: skip files that already exist at the destination and report them.
 # --replace      overwrite existing files without prompting
 # --interactive  prompt before overwriting each existing file
-# --print-prompt print the continuation prompt after installing
 
 BUNDLE_DIR="\$(cd "\$(dirname "\$0")" && pwd)"
 CLAUDE_HOME="\${CLAUDE_HOME:-\$HOME/.claude}"
@@ -377,13 +377,11 @@ TARGET_PROJECT_DIR="\$CLAUDE_HOME/projects/${target_encoded}"
 SESSION_ID="${session_id}"
 
 mode="skip"
-print_prompt=false
 
 for arg in "\$@"; do
   case "\$arg" in
     --replace)      mode="replace" ;;
     --interactive)  mode="interactive" ;;
-    --print-prompt) print_prompt=true ;;
     *) printf 'unknown option: %s\n' "\$arg" >&2; exit 2 ;;
   esac
 done
@@ -437,14 +435,8 @@ printf 'Session transcript:\n'
 install_file "\$BUNDLE_DIR/claude/\${SESSION_ID}.jsonl" "\$TARGET_PROJECT_DIR/\${SESSION_ID}.jsonl"
 
 printf '\nDone.\n'
-printf 'Open Claude Code in: ${target_path}\n'
-printf 'Start a new session and paste the continuation prompt:\n\n'
-printf '  cat "%s/continuation-prompt.md"\n\n' "\$BUNDLE_DIR"
-
-if \$print_prompt; then
-  printf '\n---\n\n'
-  cat "\$BUNDLE_DIR/continuation-prompt.md"
-fi
+printf 'Open Claude Code in the target project and tell it to read the continuation prompt:\n\n'
+printf '  Read "%s/continuation-prompt.md" and continue from there.\n\n' "\$BUNDLE_DIR"
 INSTALL_SCRIPT
 chmod +x "$bundle_dir/install.sh"
 
