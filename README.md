@@ -13,21 +13,37 @@ Captures the session transcript, project memory, and repo state, and generates a
 
 ---
 
+## Basic usage
+
+Install this repo once, for example at `~/Projects/session-handoff/`. To bundle a session for another repo, change into the repo whose session you want to migrate, then call the handoff script by path:
+
+```bash
+cd ~/Projects/my-project
+~/Projects/session-handoff/claude/bundle.sh
+~/Projects/session-handoff/codex/bundle.sh -s <session-id>
+```
+
+The scripts resolve the project root from your current working directory using `git rev-parse --show-toplevel`. That means the bundled repo state comes from `~/Projects/my-project`, not from `~/Projects/session-handoff`.
+
+---
+
 ## Claude Code — full workflow
 
 ### 1. On the source machine: bundle the session
 
-Run from anywhere inside the project:
+Run from inside the project whose Claude Code session you want to migrate:
 
 ```bash
+cd ~/Projects/my-project
+
 # Bundle the most recent session
-claude/bundle.sh
+~/Projects/session-handoff/claude/bundle.sh
 
 # Bundle a specific session
-claude/bundle.sh -s <session-id>
+~/Projects/session-handoff/claude/bundle.sh -s <session-id>
 
 # Bundle for a different project path on the target machine
-claude/bundle.sh -t /Users/mark/Projects/myproject
+~/Projects/session-handoff/claude/bundle.sh -t /Users/mark/Projects/my-project
 ```
 
 Output:
@@ -81,14 +97,16 @@ Read /tmp/claude-session-<id>-<timestamp>/continuation-prompt.md and continue fr
 
 ### 1. On the source machine: bundle the session
 
-Run from anywhere inside the project:
+Run from inside the project whose Codex CLI session you want to migrate:
 
 ```bash
+cd ~/Projects/my-project
+
 # Bundle a specific session
-codex/bundle.sh -s <session-id>
+~/Projects/session-handoff/codex/bundle.sh -s <session-id>
 
 # Bundle for a different project path on the target machine
-codex/bundle.sh -s <session-id> -t /Users/mark/Projects/myproject
+~/Projects/session-handoff/codex/bundle.sh -s <session-id> -t /Users/mark/Projects/my-project
 ```
 
 Output:
