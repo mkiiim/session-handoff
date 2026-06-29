@@ -435,7 +435,9 @@ printf 'Session transcript:\n'
 install_file "\$BUNDLE_DIR/claude/\${SESSION_ID}.jsonl" "\$TARGET_PROJECT_DIR/\${SESSION_ID}.jsonl"
 
 printf '\nDone.\n'
-printf 'Open Claude Code in the target project and tell it to read the continuation prompt:\n\n'
+printf 'Open Claude Code in the target project directory and run:\n\n'
+printf '  /resume\n\n'
+printf 'Select the migrated session. If it does not appear, fall back to the continuation prompt:\n\n'
 printf '  Read "%s/continuation-prompt.md" and continue from there.\n\n' "\$BUNDLE_DIR"
 INSTALL_SCRIPT
 chmod +x "$bundle_dir/install.sh"

@@ -365,7 +365,9 @@ printf '  %s\n' "$BUNDLE_DIR/codex/history-lines.jsonl"
 printf '  %s\n' "$BUNDLE_DIR/codex/session-index-lines.jsonl"
 
 printf '\nDone.\n'
-printf 'Open Codex in the target project and tell it to read the continuation prompt:\n\n'
+printf 'Open Codex in the target project directory and run:\n\n'
+printf '  /resume\n\n'
+printf 'Select the migrated session. If it does not appear, fall back to the continuation prompt:\n\n'
 printf '  Read "%s/continuation-prompt.md" and continue from there.\n\n' "$BUNDLE_DIR"
 INSTALL_SCRIPT
 chmod +x "$bundle_dir/install.sh"
