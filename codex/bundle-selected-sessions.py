@@ -141,8 +141,12 @@ install_file() {{
         cp "$src" "$dest"
         printf '  replaced:       %s\\n' "$dest" ;;
       interactive)
+        if [[ ! -t 0 ]]; then
+          printf '  skip (no tty):  %s\\n' "$dest"
+          return
+        fi
         printf '  overwrite %s? [y/N] ' "$dest"
-        read -r answer
+        read -r answer || answer=""
         if [[ "${{answer:-}}" =~ ^[Yy]$ ]]; then
           cp "$src" "$dest"
           printf '  replaced:       %s\\n' "$dest"
@@ -163,12 +167,15 @@ install_tree() {{
   fi
   printf '%s:\\n' "$name"
   mkdir -p "$dest_root"
-  while IFS= read -r -d '' src; do
+  local file_list
+  file_list="$tmpdir/${{name//[^A-Za-z0-9]/_}}.files"
+  find "$src_root" -type f -print0 > "$file_list"
+  while IFS= read -r -d '' src <&3; do
     rel="${{src#$src_root/}}"
     dest="$dest_root/$rel"
     mkdir -p "$(dirname "$dest")"
     install_file "$src" "$dest"
-  done < <(find "$src_root" -type f -print0)
+  done 3< "$file_list"
 }}
 
 tmpdir="$(mktemp -d "${{TMPDIR:-/tmp}}/codex-session-migration.XXXXXX")"
