@@ -126,7 +126,7 @@ copy_codex_relative() {
   local dest="$bundle_dir/codex/$rel"
 
   mkdir -p "$(dirname "$dest")"
-  cp "$src" "$dest"
+  cp -p "$src" "$dest"
   printf '%s\n' "$rel"
 }
 
@@ -315,20 +315,20 @@ install_file() {
         printf '  skip (exists):  %s\n' "$dest"
         return ;;
       replace)
-        cp "$src" "$dest"
+        cp -p "$src" "$dest"
         printf '  replaced:       %s\n' "$dest" ;;
       interactive)
         printf '  overwrite %s? [y/N] ' "$dest"
         read -r answer
         if [[ "${answer:-}" =~ ^[Yy]$ ]]; then
-          cp "$src" "$dest"
+          cp -p "$src" "$dest"
           printf '  replaced:       %s\n' "$dest"
         else
           printf '  skipped:        %s\n' "$dest"
         fi ;;
     esac
   else
-    cp "$src" "$dest"
+    cp -p "$src" "$dest"
     printf '  installed:      %s\n' "$dest"
   fi
 }

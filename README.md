@@ -161,7 +161,7 @@ tar -xzf ~/Downloads/codex-session-<id>-<timestamp>.tar.gz -C /tmp/
 /tmp/codex-session-<id>-<timestamp>/install.sh
 ```
 
-`install.sh` restores session rollouts and shell snapshots into `$CODEX_HOME` one file at a time. It does not modify `history.jsonl` or `session_index.jsonl`; matching lines are bundled for manual review.
+`install.sh` restores session rollouts and shell snapshots into `$CODEX_HOME` one file at a time, preserving source file timestamps so Codex keeps the source session times. It does not modify `history.jsonl` or `session_index.jsonl`; matching lines are bundled for manual review.
 
 Open Codex in the target project directory, start a new session, and tell it to read the continuation prompt:
 

@@ -72,6 +72,9 @@ archive explicitly:
 Default behavior skips existing files. Use `--replace` to overwrite or
 `--interactive` to prompt per file.
 
+Installed session files preserve the source file timestamps, so Codex should
+show the source session times instead of the migration time.
+
 The installer restores:
 
 ```text

@@ -138,7 +138,7 @@ install_file() {{
         printf '  skip (exists):  %s\\n' "$dest"
         return ;;
       replace)
-        cp "$src" "$dest"
+        cp -p "$src" "$dest"
         printf '  replaced:       %s\\n' "$dest" ;;
       interactive)
         if [[ ! -t 0 ]]; then
@@ -148,14 +148,14 @@ install_file() {{
         printf '  overwrite %s? [y/N] ' "$dest"
         read -r answer || answer=""
         if [[ "${{answer:-}}" =~ ^[Yy]$ ]]; then
-          cp "$src" "$dest"
+          cp -p "$src" "$dest"
           printf '  replaced:       %s\\n' "$dest"
         else
           printf '  skipped:        %s\\n' "$dest"
         fi ;;
     esac
   else
-    cp "$src" "$dest"
+    cp -p "$src" "$dest"
     printf '  installed:      %s\\n' "$dest"
   fi
 }}

@@ -90,6 +90,9 @@ directly if you need different conflict handling:
 bash ~/Downloads/codex-session-migration-<timestamp>.install.sh --replace
 ```
 
+Installed session files preserve the source file timestamps, so Codex should show the source
+session times instead of the migration time.
+
 ### 4. Save locally (no user@host)
 
 Without a host, the archive, installer, and manifest are saved to the output directory:
