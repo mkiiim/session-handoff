@@ -151,6 +151,8 @@ def build_inventory(claude_home: Path) -> list[dict]:
 # ── picker ───────────────────────────────────────────────────────────────────
 
 def pick_sessions(rows: list[dict]) -> list[dict]:
+    if not shutil.which("fzf"):
+        raise SystemExit("fzf is required but not found in PATH. Install it with: brew install fzf")
     lines = []
     for i, row in enumerate(rows):
         repo = (row["repo_name"] or row["claude_project_dir"])[:22]
