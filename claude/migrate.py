@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -374,6 +375,52 @@ def build_bundle(selected: list[dict], claude_home: Path, bundle_name: str, tmp:
     return archive_path, installer_path
 
 
+# ── target path confirmation ─────────────────────────────────────────────────
+
+def input_with_prefill(prompt: str, prefill: str) -> str:
+    result = subprocess.run(
+        [
+            "bash", "-c",
+            f"read -e -i {shlex.quote(prefill)} -p {shlex.quote(prompt)} REPLY"
+            f" && printf '%s' \"$REPLY\"",
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return result.stdout or prefill
+
+
+def confirm_target_paths(selected: list[dict]) -> None:
+    """For each unresolved (?) project in the selection, prompt for target path."""
+    # Collect unique ? projects in selection order
+    seen: set[str] = set()
+    unknown_projects: list[str] = []
+    for row in selected:
+        key = row["claude_project_dir"]
+        if not row["project_exists"] and key not in seen:
+            seen.add(key)
+            unknown_projects.append(key)
+
+    if not unknown_projects:
+        return
+
+    print(f"\n{len(unknown_projects)} project path(s) could not be verified on this machine.")
+    print("Edit each target path — this determines where the session lands on the destination.\n")
+
+    overrides: dict[str, str] = {}
+    for encoded in unknown_projects:
+        # Use the decoded guess from the first matching row
+        prefill = next(r["target_project_root"] for r in selected if r["claude_project_dir"] == encoded)
+        value = input_with_prefill(f"  {encoded}\n  target: ", prefill).strip()
+        overrides[encoded] = value or prefill
+
+    # Apply overrides to all sessions in the affected projects
+    for row in selected:
+        key = row["claude_project_dir"]
+        if key in overrides:
+            row["target_project_root"] = overrides[key]
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 
 def parse_args():
@@ -395,8 +442,8 @@ def parse_args():
     )
     parser.add_argument(
         "--output-dir",
-        default=str(Path.home() / "claude-session-migration-bundles"),
-        help="Local output directory when no host is given",
+        default=str(Path.home() / "Downloads" / "claude-session-migration-bundles"),
+        help="Local output directory when no host is given (default: ~/Downloads/claude-session-migration-bundles)",
     )
     return parser.parse_args()
 
@@ -417,6 +464,8 @@ def main() -> int:
     if not selected:
         print("No sessions selected.")
         return 0
+
+    confirm_target_paths(selected)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     bundle_name = f"claude-session-migration-{timestamp}"
