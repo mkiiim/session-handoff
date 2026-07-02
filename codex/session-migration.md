@@ -1,8 +1,17 @@
 # Codex Session Migration
 
-This flow is separate from `codex/bundle.sh`. It is for inventorying many local
-Codex sessions, selecting rows in one CSV, and creating one migration archive
-plus a sibling installer.
+For most bulk migrations, prefer the interactive flow:
+
+```bash
+~/Projects/session-handoff/codex/migrate.py
+```
+
+That command scans local Codex sessions, opens an `fzf` picker, and creates one
+migration archive plus a sibling installer. See `codex/migrate.md` for the full
+interactive flow.
+
+The CSV flow below is still available when you want an Excel-editable inventory
+or a more auditable manual selection step. It is separate from `codex/bundle.sh`.
 
 ## Source machine
 

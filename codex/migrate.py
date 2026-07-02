@@ -369,6 +369,7 @@ printf '\\nState files were bundled for review but not installed automatically.\
 printf 'Inspect these paths inside the archive if needed:\\n'
 printf '  codex/history-lines.jsonl\\n'
 printf '  codex/session-index-lines.jsonl\\n'
+printf '  manifest.csv\\n'
 
 printf '\\nDone. Clone or sync the related repos separately,\\n'
 printf 'then run Codex from the target repo and use /resume.\\n'

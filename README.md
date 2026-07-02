@@ -27,6 +27,28 @@ The scripts resolve the project root from your current working directory using `
 
 ---
 
+## Bulk migration
+
+Use the interactive migration scripts when you want to move many local sessions:
+
+```bash
+~/Projects/session-handoff/claude/migrate.py
+~/Projects/session-handoff/codex/migrate.py
+```
+
+Each script scans local sessions, opens an `fzf` picker, and creates a migration
+archive plus a sibling installer. Pass `user@host` to copy and install over SSH:
+
+```bash
+~/Projects/session-handoff/codex/migrate.py user@host
+```
+
+See `claude/migrate.md` and `codex/migrate.md` for the interactive flows. The
+Codex CSV workflow in `codex/session-migration.md` remains available when you
+want to select sessions through an Excel-editable inventory.
+
+---
+
 ## Claude Code — full workflow
 
 ### 1. On the source machine: bundle the session
