@@ -177,30 +177,32 @@ def pick_sessions(rows: list[dict]) -> list[dict]:
         raise SystemExit("fzf is required but not found in PATH. Install it with: brew install fzf")
     lines = []
     for i, row in enumerate(rows):
-        repo = (row["repo_name"] or row["recorded_cwd"] or "?")[:22]
+        path = row["repo_root"] or row["recorded_cwd"] or "?"
+        path = ("…" + path[-31:]) if len(path) > 32 else path
         flag = "!" if not row["repo_exists"] else " "
         area = row["source_area"][:8]
         date = row["last_modified"][:10]
         size = f"{float(row['size_mb']):5.2f}MB"
-        title = (row["first_user_text"] or "")[:60]
-        lines.append(f"{i:04d}\t{repo:<22} {flag} {area:<8}  {date}  {size}  {title}")
+        title = (row["first_user_text"] or "")[:55]
+        lines.append(f"{i:04d}\t{path:<32}  {flag}  {area:<8}  {date}  {size}  {title}")
 
-    col_header = f"     {'REPO':<22} {'':1} {'AREA':<8}  {'DATE':<10}  {'SIZE':>7}  TITLE"
+    col_header = f"XXXX\t{'PATH':<32}  !  {'AREA':<8}  {'DATE':<10}  {'SIZE':>7}  TITLE"
 
     result = subprocess.run(
         [
             "fzf",
             "--multi",
             "--with-nth=2..",
-            "--nth=2..",
             "--delimiter=\t",
-            f"--header=Tab·select  Enter·confirm  Esc·cancel\n{col_header}",
+            "--header-lines=1",
+            "--header=Tab·select  Enter·confirm  Esc·cancel",
             "--prompt=Sessions > ",
             "--height=80%",
             "--layout=reverse",
             "--info=inline",
+            "--no-hscroll",
         ],
-        input="\n".join(lines),
+        input="\n".join([col_header] + lines),
         stdout=subprocess.PIPE,
         text=True,
     )

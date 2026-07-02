@@ -153,32 +153,34 @@ def build_inventory(claude_home: Path) -> list[dict]:
 def pick_sessions(rows: list[dict]) -> list[dict]:
     if not shutil.which("fzf"):
         raise SystemExit("fzf is required but not found in PATH. Install it with: brew install fzf")
+
     lines = []
     for i, row in enumerate(rows):
-        repo = (row["repo_name"] or row["claude_project_dir"])[:22]
+        path = row["project_root"] or row["claude_project_dir"]
+        path = ("…" + path[-35:]) if len(path) > 36 else path
         flag = "?" if not row["project_exists"] else " "
         date = row["last_modified"][:10]
         size = f"{float(row['size_mb']):5.2f}MB"
-        mem = "M" if row["has_memory"] else " "
-        title = (row["ai_title"] or row["last_user_text"] or "")[:60]
-        lines.append(f"{i:04d}\t{repo:<22} {flag} {date}  {size}  {mem}  {title}")
+        title = (row["ai_title"] or row["last_user_text"] or "")[:55]
+        lines.append(f"{i:04d}\t{path:<36}  {flag}  {date}  {size}  {title}")
 
-    col_header = f"     {'REPO':<22} {'':1} {'DATE':<10}  {'SIZE':>7}  M  TITLE"
+    col_header = f"XXXX\t{'PATH':<36}  ?  {'DATE':<10}  {'SIZE':>7}  TITLE"
 
     result = subprocess.run(
         [
             "fzf",
             "--multi",
             "--with-nth=2..",
-            "--nth=2..",
             "--delimiter=\t",
-            f"--header=Tab·select  Enter·confirm  Esc·cancel\n{col_header}",
+            "--header-lines=1",
+            "--header=Tab·select  Enter·confirm  Esc·cancel",
             "--prompt=Sessions > ",
             "--height=80%",
             "--layout=reverse",
             "--info=inline",
+            "--no-hscroll",
         ],
-        input="\n".join(lines),
+        input="\n".join([col_header] + lines),
         stdout=subprocess.PIPE,
         text=True,
     )
