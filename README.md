@@ -139,7 +139,7 @@ Archive: ~/codex-session-bundles/codex-session-<id>-<timestamp>.tar.gz
 Prompt: ~/codex-session-bundles/codex-session-<id>-<timestamp>/continuation-prompt.md
 ```
 
-The Codex bundle preserves paths relative to `$CODEX_HOME`, so session files keep their native shape:
+The Codex bundle preserves paths relative to `$CODEX_HOME`, so session files keep their native shape. When `-t` points to a different target project path, the copied rollout JSONL is rewritten to that path so `codex resume` can treat it as a session for the target repo.
 
 ```
 codex/

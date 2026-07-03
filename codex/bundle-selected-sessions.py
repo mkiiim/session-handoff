@@ -56,6 +56,45 @@ def copy_codex_file(src: Path, codex_home: Path, bundle_root: Path) -> str:
     return str(rel)
 
 
+def rewrite_string(value: str, source_path: str, target_path: str) -> str:
+    return value.replace(source_path, target_path) if source_path and target_path else value
+
+
+def rewrite_paths(value: object, source_path: str, target_path: str) -> object:
+    if isinstance(value, str):
+        return rewrite_string(value, source_path, target_path)
+    if isinstance(value, list):
+        return [rewrite_paths(item, source_path, target_path) for item in value]
+    if isinstance(value, dict):
+        return {key: rewrite_paths(item, source_path, target_path) for key, item in value.items()}
+    return value
+
+
+def rewrite_rollout_paths(path: Path, source_path: str, target_path: str, source_stat: os.stat_result) -> bool:
+    if not source_path or not target_path or source_path == target_path:
+        return False
+
+    changed = False
+    rewritten: list[str] = []
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            raw = line.rstrip("\n")
+            try:
+                record = json.loads(raw)
+            except json.JSONDecodeError:
+                rewritten.append(line)
+                continue
+            updated = rewrite_paths(record, source_path, target_path)
+            if updated != record:
+                changed = True
+            rewritten.append(json.dumps(updated, separators=(",", ":"), ensure_ascii=False) + "\n")
+
+    if changed:
+        path.write_text("".join(rewritten), encoding="utf-8")
+        os.utime(path, ns=(source_stat.st_atime_ns, source_stat.st_mtime_ns))
+    return changed
+
+
 def matching_state_lines(path: Path, session_ids: set[str], key: str) -> list[str]:
     if not path.exists():
         return []
@@ -249,7 +288,16 @@ def main() -> int:
         manifest_rows: list[dict[str, str]] = []
         for row in unique_rows:
             rollout_path = Path(row["rollout_path"]).expanduser()
+            rollout_stat = rollout_path.stat()
             rollout_rel = copy_codex_file(rollout_path, codex_home, bundle_root)
+            source_cwd = (row.get("recorded_cwd") or "").strip()
+            target_cwd = (row.get("target_repo_root") or "").strip() or source_cwd
+            path_rewritten = rewrite_rollout_paths(
+                bundle_root / "codex" / rollout_rel,
+                source_cwd,
+                target_cwd,
+                rollout_stat,
+            )
             shell_relpaths: list[str] = []
             for raw_path in (row.get("shell_snapshot_paths") or "").split("|"):
                 raw_path = raw_path.strip()
@@ -257,6 +305,8 @@ def main() -> int:
                     continue
                 shell_relpaths.append(copy_codex_file(Path(raw_path).expanduser(), codex_home, bundle_root))
             manifest_row = dict(row)
+            manifest_row["target_cwd"] = target_cwd
+            manifest_row["path_rewritten"] = str(path_rewritten).lower()
             manifest_row["bundle_rollout_relpath"] = rollout_rel
             manifest_row["bundle_shell_snapshot_relpaths"] = "|".join(shell_relpaths)
             manifest_rows.append(manifest_row)
@@ -267,7 +317,7 @@ def main() -> int:
         write_text(bundle_root / "codex" / "session-index-lines.jsonl", "".join(session_index_lines))
 
         manifest_fields = list(manifest_rows[0].keys()) if manifest_rows else []
-        for extra in ["bundle_rollout_relpath", "bundle_shell_snapshot_relpaths"]:
+        for extra in ["target_cwd", "path_rewritten", "bundle_rollout_relpath", "bundle_shell_snapshot_relpaths"]:
             if extra not in manifest_fields:
                 manifest_fields.append(extra)
         manifest_path = bundle_root / "manifest.csv"

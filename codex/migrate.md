@@ -11,6 +11,13 @@ Use it when you want to select and transfer sessions without leaving the termina
 
 # Bundle and transfer directly to a remote machine
 ~/Projects/session-handoff/codex/migrate.py user@host
+
+# Rewrite selected sessions to a different repo path on the target machine
+~/Projects/session-handoff/codex/migrate.py user@host \
+  --target-path /Users/mark/Projects/codex
+
+# Replace existing sessions during remote install
+~/Projects/session-handoff/codex/migrate.py user@host --replace
 ```
 
 Options:
@@ -19,6 +26,9 @@ Options:
 user@host             SSH target. If omitted, bundle is saved locally.
 --codex-home PATH     Codex home directory (default: $CODEX_HOME or ~/.codex)
 --target-dir PATH     Directory on target host to receive the bundle (default: ~/Downloads)
+--target-path PATH    Rewrite selected sessions to this target project path
+--replace             Overwrite existing files during remote install
+--interactive         Prompt before overwriting files during remote install
 --output-dir PATH     Local output directory when no host is given
 ```
 
@@ -49,20 +59,30 @@ Sessions > ▌                                    < 17 (0)
 
 The `!` column flags sessions whose recorded working directory does not exist on this machine
 (e.g. a repo that lived on an external drive). These sessions can still be selected and
-migrated — the install path is always relative to `CODEX_HOME` and does not depend on the
-original working directory.
+migrated.
 
 The **AREA** column shows `sessions` for active rollouts and `archived` for archived ones,
 matching the subdirectory structure under `CODEX_HOME`.
 
-### 3. Bundle
+### 3. Resolve target paths
+
+By default, selected sessions keep their recorded source cwd, assuming the repo will live at
+the same path on the target machine.
+
+Use `--target-path` when the repo will live somewhere else on the target machine. The target
+path is applied to every selected session.
+
+The target path is written into the bundled rollout JSONL so `codex resume` can treat the
+migrated session as belonging to the target repo path.
+
+### 4. Bundle
 
 Selected sessions are bundled into a `.tar.gz` archive with a sibling `.install.sh` installer
 and a `manifest.csv` audit log. Shell snapshots are included automatically. Matching lines
 from `history.jsonl` and `session_index.jsonl` are included under `codex/` for review only
 and are not installed automatically.
 
-### 4. Transfer and install (with user@host)
+### 5. Transfer and install (with user@host)
 
 The archive and installer are copied to the target machine via `scp`, then the installer
 runs over SSH:
@@ -83,8 +103,10 @@ Archived sessions:
 Bundle kept at mark@mini-m4:~/Downloads/
 ```
 
-Default behavior skips existing files. Pass `--replace` or `--interactive` to the installer
-directly if you need different conflict handling:
+Default behavior skips existing files. Pass `--replace` or `--interactive` to `migrate.py`
+when using `user@host` to forward that mode to the remote installer.
+
+You can also pass those flags to the installer directly:
 
 ```bash
 bash ~/Downloads/codex-session-migration-<timestamp>.install.sh --replace
@@ -93,7 +115,7 @@ bash ~/Downloads/codex-session-migration-<timestamp>.install.sh --replace
 Installed session files preserve the source file timestamps, so Codex should show the source
 session times instead of the migration time.
 
-### 4. Save locally (no user@host)
+### 6. Save locally (no user@host)
 
 Without a host, the archive, installer, and manifest are saved to the output directory:
 

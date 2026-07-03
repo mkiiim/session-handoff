@@ -130,15 +130,67 @@ copy_codex_relative() {
   printf '%s\n' "$rel"
 }
 
+rewrite_rollout_path() {
+  local path="$1"
+  python3 - "$path" "$repo_root" "$target_path" <<'PYEOF'
+import json
+import os
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+source_path = sys.argv[2]
+target_path = sys.argv[3]
+
+if not source_path or not target_path or source_path == target_path:
+    raise SystemExit(0)
+
+
+def rewrite(value):
+    if isinstance(value, str):
+        return value.replace(source_path, target_path)
+    if isinstance(value, list):
+        return [rewrite(item) for item in value]
+    if isinstance(value, dict):
+        return {key: rewrite(item) for key, item in value.items()}
+    return value
+
+
+stat = path.stat()
+changed = False
+rewritten = []
+with path.open("r", encoding="utf-8", errors="replace") as handle:
+    for line in handle:
+        raw = line.rstrip("\n")
+        try:
+            record = json.loads(raw)
+        except json.JSONDecodeError:
+            rewritten.append(line)
+            continue
+        updated = rewrite(record)
+        if updated != record:
+            changed = True
+        rewritten.append(json.dumps(updated, separators=(",", ":"), ensure_ascii=False) + "\n")
+
+if changed:
+    path.write_text("".join(rewritten), encoding="utf-8")
+    os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+PYEOF
+}
+
 : >"$session_list"
 for file in "${session_files[@]}"; do
-  copy_codex_relative "$file" >>"$session_list"
+  rel="$(copy_codex_relative "$file")"
+  rewrite_rollout_path "$bundle_dir/codex/$rel"
+  printf '%s\n' "$rel" >>"$session_list"
 done
 
 : >"$shell_list"
-for file in "${shell_snapshot_files[@]}"; do
-  copy_codex_relative "$file" >>"$shell_list"
-done
+if [[ ${#shell_snapshot_files[@]} -gt 0 ]]; then
+  for file in "${shell_snapshot_files[@]}"; do
+    copy_codex_relative "$file" >>"$shell_list"
+  done
+fi
 
 if [[ -f "$codex_home/history.jsonl" ]]; then
   rg --fixed-strings "\"session_id\":\"$session_id\"" "$codex_home/history.jsonl" >"$history_lines" || true

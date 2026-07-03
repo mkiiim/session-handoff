@@ -34,6 +34,11 @@ checked
 migrate
 ```
 
+If the repo will live at a different path on the target machine, set
+`target_repo_root` for those rows. The bundler rewrites the copied rollout JSONL
+from `recorded_cwd` to `target_repo_root` so `codex resume` can treat the
+migrated sessions as belonging to the target repo path.
+
 Then build the selected-session migration bundle:
 
 ```bash

@@ -232,6 +232,45 @@ def copy_file(src: Path, codex_home: Path, bundle_root: Path) -> str:
     return str(rel)
 
 
+def rewrite_string(value: str, source_path: str, target_path: str) -> str:
+    return value.replace(source_path, target_path) if source_path and target_path else value
+
+
+def rewrite_paths(value: object, source_path: str, target_path: str) -> object:
+    if isinstance(value, str):
+        return rewrite_string(value, source_path, target_path)
+    if isinstance(value, list):
+        return [rewrite_paths(item, source_path, target_path) for item in value]
+    if isinstance(value, dict):
+        return {key: rewrite_paths(item, source_path, target_path) for key, item in value.items()}
+    return value
+
+
+def rewrite_rollout_paths(path: Path, source_path: str, target_path: str, source_stat: os.stat_result) -> bool:
+    if not source_path or not target_path or source_path == target_path:
+        return False
+
+    changed = False
+    rewritten: list[str] = []
+    with path.open("r", encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            raw = line.rstrip("\n")
+            try:
+                record = json.loads(raw)
+            except json.JSONDecodeError:
+                rewritten.append(line)
+                continue
+            updated = rewrite_paths(record, source_path, target_path)
+            if updated != record:
+                changed = True
+            rewritten.append(json.dumps(updated, separators=(",", ":"), ensure_ascii=False) + "\n")
+
+    if changed:
+        path.write_text("".join(rewritten), encoding="utf-8")
+        os.utime(path, ns=(source_stat.st_atime_ns, source_stat.st_mtime_ns))
+    return changed
+
+
 def matching_state_lines(path: Path, session_ids: set[str], key: str) -> list[str]:
     if not path.exists():
         return []
@@ -378,6 +417,7 @@ printf 'then run Codex from the target repo and use /resume.\\n'
 
 MANIFEST_FIELDS = [
     "session_id", "repo_name", "repo_root", "repo_exists", "recorded_cwd",
+    "target_cwd", "path_rewritten",
     "source_area", "started_at", "last_modified", "size_mb", "line_count",
     "history_count", "first_user_text", "last_user_text",
     "bundle_rollout_relpath", "bundle_shell_snapshot_relpaths",
@@ -393,7 +433,15 @@ def build_bundle(selected: list[dict], codex_home: Path, bundle_name: str, tmp: 
 
     for row in selected:
         rollout = Path(row["rollout_path"])
+        source_stat = rollout.stat()
         rollout_rel = copy_file(rollout, codex_home, bundle_root)
+        target_cwd = (row.get("target_cwd") or row.get("recorded_cwd") or "").strip()
+        path_rewritten = rewrite_rollout_paths(
+            bundle_root / "codex" / rollout_rel,
+            (row.get("recorded_cwd") or "").strip(),
+            target_cwd,
+            source_stat,
+        )
         snapshot_rels: list[str] = []
         for raw in (row.get("shell_snapshot_paths") or "").split("|"):
             raw = raw.strip()
@@ -401,6 +449,8 @@ def build_bundle(selected: list[dict], codex_home: Path, bundle_name: str, tmp: 
                 snapshot_rels.append(copy_file(Path(raw), codex_home, bundle_root))
         manifest_rows.append({
             **{k: row.get(k, "") for k in MANIFEST_FIELDS if k not in ("bundle_rollout_relpath", "bundle_shell_snapshot_relpaths")},
+            "target_cwd": target_cwd,
+            "path_rewritten": str(path_rewritten).lower(),
             "bundle_rollout_relpath": rollout_rel,
             "bundle_shell_snapshot_relpaths": "|".join(snapshot_rels),
         })
@@ -427,6 +477,12 @@ def build_bundle(selected: list[dict], codex_home: Path, bundle_name: str, tmp: 
     return archive_path, installer_path, manifest_path
 
 
+def apply_target_path(selected: list[dict], target_path: str | None = None) -> None:
+    for row in selected:
+        source_path = (row.get("recorded_cwd") or "").strip()
+        row["target_cwd"] = target_path or source_path
+
+
 # ── main ─────────────────────────────────────────────────────────────────────
 
 def parse_args():
@@ -445,6 +501,21 @@ def parse_args():
         "--target-dir",
         default="~/Downloads",
         help="Directory on target host to receive the bundle (default: ~/Downloads)",
+    )
+    parser.add_argument(
+        "--target-path",
+        help="Rewrite selected sessions to this target project path (default: keep each source path)",
+    )
+    install_mode = parser.add_mutually_exclusive_group()
+    install_mode.add_argument(
+        "--replace",
+        action="store_true",
+        help="When using user@host, pass --replace to the remote installer",
+    )
+    install_mode.add_argument(
+        "--interactive",
+        action="store_true",
+        help="When using user@host, pass --interactive to the remote installer",
     )
     parser.add_argument(
         "--output-dir",
@@ -471,6 +542,8 @@ def main() -> int:
         print("No sessions selected.")
         return 0
 
+    apply_target_path(selected, args.target_path)
+
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     bundle_name = f"codex-session-migration-{timestamp}"
 
@@ -488,8 +561,16 @@ def main() -> int:
                 check=True,
             )
             print(f"Installing on {args.host} ...", flush=True)
+            installer_flags = []
+            if args.replace:
+                installer_flags.append("--replace")
+            elif args.interactive:
+                installer_flags.append("--interactive")
+            remote_install = " ".join(
+                ["bash", f"{target_dir}/{bundle_name}.install.sh", *installer_flags]
+            )
             subprocess.run(
-                ["ssh", "-t", args.host, f"bash {target_dir}/{bundle_name}.install.sh"],
+                ["ssh", "-t", args.host, remote_install],
                 check=True,
             )
             print(f"\nBundle kept at {args.host}:{target_dir}/")
