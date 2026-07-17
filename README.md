@@ -1,4 +1,4 @@
-# session-handoff
+# session-migrate
 
 Bundle an AI coding session for transfer to another machine.
 
@@ -15,15 +15,15 @@ Captures the session transcript, project memory, and repo state, and generates a
 
 ## Basic usage
 
-Install this repo once, for example at `~/Projects/session-handoff/`. To bundle a session for another repo, change into the repo whose session you want to migrate, then call the handoff script by path:
+Install this repo once, for example at `~/Projects/session-migrate/`. To bundle a session for another repo, change into the repo whose session you want to migrate, then call the handoff script by path:
 
 ```bash
 cd ~/Projects/my-project
-~/Projects/session-handoff/claude/bundle.sh
-~/Projects/session-handoff/codex/bundle.sh -s <session-id>
+~/Projects/session-migrate/claude/bundle.sh
+~/Projects/session-migrate/codex/bundle.sh -s <session-id>
 ```
 
-The scripts resolve the project root from your current working directory using `git rev-parse --show-toplevel`. That means the bundled repo state comes from `~/Projects/my-project`, not from `~/Projects/session-handoff`.
+The scripts resolve the project root from your current working directory using `git rev-parse --show-toplevel`. That means the bundled repo state comes from `~/Projects/my-project`, not from `~/Projects/session-migrate`.
 
 ---
 
@@ -32,15 +32,15 @@ The scripts resolve the project root from your current working directory using `
 Use the interactive migration scripts when you want to move many local sessions:
 
 ```bash
-~/Projects/session-handoff/claude/migrate.py
-~/Projects/session-handoff/codex/migrate.py
+~/Projects/session-migrate/claude/migrate.py
+~/Projects/session-migrate/codex/migrate.py
 ```
 
 Each script scans local sessions, opens an `fzf` picker, and creates a migration
 archive plus a sibling installer. Pass `user@host` to copy and install over SSH:
 
 ```bash
-~/Projects/session-handoff/codex/migrate.py user@host
+~/Projects/session-migrate/codex/migrate.py user@host
 ```
 
 See `claude/migrate.md` and `codex/migrate.md` for the interactive flows. The
@@ -59,13 +59,13 @@ Run from inside the project whose Claude Code session you want to migrate:
 cd ~/Projects/my-project
 
 # Bundle the most recent session
-~/Projects/session-handoff/claude/bundle.sh
+~/Projects/session-migrate/claude/bundle.sh
 
 # Bundle a specific session
-~/Projects/session-handoff/claude/bundle.sh -s <session-id>
+~/Projects/session-migrate/claude/bundle.sh -s <session-id>
 
 # Bundle for a different project path on the target machine
-~/Projects/session-handoff/claude/bundle.sh -t /Users/mark/Projects/my-project
+~/Projects/session-migrate/claude/bundle.sh -t /Users/mark/Projects/my-project
 ```
 
 Output:
@@ -125,10 +125,10 @@ Run from inside the project whose Codex CLI session you want to migrate:
 cd ~/Projects/my-project
 
 # Bundle a specific session
-~/Projects/session-handoff/codex/bundle.sh -s <session-id>
+~/Projects/session-migrate/codex/bundle.sh -s <session-id>
 
 # Bundle for a different project path on the target machine
-~/Projects/session-handoff/codex/bundle.sh -s <session-id> -t /Users/mark/Projects/my-project
+~/Projects/session-migrate/codex/bundle.sh -s <session-id> -t /Users/mark/Projects/my-project
 ```
 
 Output:

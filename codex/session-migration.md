@@ -3,7 +3,7 @@
 For most bulk migrations, prefer the interactive flow:
 
 ```bash
-~/Projects/session-handoff/codex/migrate.py
+~/Projects/session-migrate/codex/migrate.py
 ```
 
 That command scans local Codex sessions, opens an `fzf` picker, and creates one
@@ -18,7 +18,7 @@ or a more auditable manual selection step. It is separate from `codex/bundle.sh`
 Run the inventory from anywhere:
 
 ```bash
-~/Projects/session-handoff/codex/inventory.py \
+~/Projects/session-migrate/codex/inventory.py \
   -o ~/codex-session-inventory/codex-sessions-inventory.csv
 ```
 
@@ -42,7 +42,7 @@ migrated sessions as belonging to the target repo path.
 Then build the selected-session migration bundle:
 
 ```bash
-~/Projects/session-handoff/codex/bundle-selected-sessions.py \
+~/Projects/session-migrate/codex/bundle-selected-sessions.py \
   -i ~/codex-session-inventory/codex-sessions-inventory.csv \
   -o ~/codex-session-migration-bundles
 ```

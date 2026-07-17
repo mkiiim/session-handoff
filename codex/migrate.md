@@ -7,17 +7,17 @@ Use it when you want to select and transfer sessions without leaving the termina
 
 ```bash
 # Bundle locally (saved to ~/Downloads/codex-session-migration-bundles/)
-~/Projects/session-handoff/codex/migrate.py
+~/Projects/session-migrate/codex/migrate.py
 
 # Bundle and transfer directly to a remote machine
-~/Projects/session-handoff/codex/migrate.py user@host
+~/Projects/session-migrate/codex/migrate.py user@host
 
 # Rewrite selected sessions to a different repo path on the target machine
-~/Projects/session-handoff/codex/migrate.py user@host \
+~/Projects/session-migrate/codex/migrate.py user@host \
   --target-path /Users/mark/Projects/codex
 
 # Replace existing sessions during remote install
-~/Projects/session-handoff/codex/migrate.py user@host --replace
+~/Projects/session-migrate/codex/migrate.py user@host --replace
 ```
 
 Options:
