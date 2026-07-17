@@ -449,6 +449,17 @@ def parse_args():
         default=str(Path.home() / "Downloads" / "claude-session-migration-bundles"),
         help="Local output directory when no host is given (default: ~/Downloads/claude-session-migration-bundles)",
     )
+    install_mode = parser.add_mutually_exclusive_group()
+    install_mode.add_argument(
+        "--replace",
+        action="store_true",
+        help="When using user@host, pass --replace to the remote installer",
+    )
+    install_mode.add_argument(
+        "--interactive",
+        action="store_true",
+        help="When using user@host, pass --interactive to the remote installer",
+    )
     return parser.parse_args()
 
 
@@ -488,8 +499,16 @@ def main() -> int:
                 check=True,
             )
             print(f"Installing on {args.host} ...", flush=True)
+            installer_flags = []
+            if args.replace:
+                installer_flags.append("--replace")
+            elif args.interactive:
+                installer_flags.append("--interactive")
+            remote_install = " ".join(
+                ["bash", f"{target_dir}/{bundle_name}.install.sh", *installer_flags]
+            )
             subprocess.run(
-                ["ssh", "-t", args.host, f"bash {target_dir}/{bundle_name}.install.sh"],
+                ["ssh", "-t", args.host, remote_install],
                 check=True,
             )
             print(f"\nBundle kept at {args.host}:{target_dir}/")

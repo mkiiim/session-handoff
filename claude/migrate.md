@@ -20,6 +20,8 @@ user@host             SSH target. If omitted, bundle is saved locally.
 --claude-home PATH    Claude home directory (default: ~/.claude)
 --target-dir PATH     Directory on target host to receive the bundle (default: ~/Downloads)
 --output-dir PATH     Local output directory when no host is given
+--replace             Pass --replace to the remote installer (user@host only)
+--interactive         Pass --interactive to the remote installer (user@host only)
 ```
 
 ## Flow
@@ -97,11 +99,18 @@ Installing Claude session migration...
 Bundle kept at mark@mini-m4:~/Downloads/
 ```
 
-Default behavior skips existing files. Pass `--replace` or `--interactive` to the installer
-directly if you need different conflict handling:
+Default behavior skips existing files. Pass `--replace` or `--interactive` to `migrate.py`
+to forward the flag to the remote installer automatically:
 
 ```bash
-bash ~/Downloads/claude-session-migration-<timestamp>.install.sh --replace
+~/Projects/session-migrate/claude/migrate.py user@host --replace
+~/Projects/session-migrate/claude/migrate.py user@host --interactive
+```
+
+When saving locally, run the installer directly with the desired flag:
+
+```bash
+bash ~/Downloads/claude-session-migration-bundles/claude-session-migration-<timestamp>.install.sh --replace
 ```
 
 ### 5. Save locally (no user@host)
